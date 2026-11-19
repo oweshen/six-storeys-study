@@ -1,0 +1,149 @@
+<title>What's That Number</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{
+  --ground:#FAF8F5; --panel:#FFFFFF; --ink:#211E19; --muted:#6E675D; --rule:#E4DFD6;
+  --accent:#B5541B; --soft:#F3EEE6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#191714; --panel:#201D19; --ink:#EAE5DC; --muted:#A39B8D; --rule:#36312A;
+    --accent:#E07A3A; --soft:#262220;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#191714; --panel:#201D19; --ink:#EAE5DC; --muted:#A39B8D; --rule:#36312A;
+  --accent:#E07A3A; --soft:#262220;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:"Archivo",-apple-system,"Helvetica Neue",Arial,sans-serif;line-height:1.55}
+.wrap{max-width:640px;margin:0 auto;padding:40px 18px 80px}
+h1{font-size:1.5rem;font-weight:800;letter-spacing:-.01em;margin:0 0 4px;text-wrap:balance}
+.sub{color:var(--muted);font-size:.92rem;margin:0 0 22px}
+#q{width:100%;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:2rem;font-weight:500;
+  padding:18px 20px;border:3px solid var(--ink);border-radius:16px;background:var(--panel);
+  color:var(--ink);outline:none;font-feature-settings:"tnum"}
+#q:focus{border-color:var(--accent)}
+#q::placeholder{color:var(--muted);opacity:.5}
+.card{background:var(--panel);border:1px solid var(--rule);border-left:5px solid var(--accent);
+  border-radius:14px;padding:18px 20px;margin-top:16px}
+.card .num{font-family:"IBM Plex Mono",monospace;font-size:.85rem;color:var(--accent);letter-spacing:.04em}
+.card h2{font-size:1.18rem;font-weight:700;margin:2px 0 10px}
+.row{margin:8px 0;font-size:.97rem}
+.row b{display:block;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.none{color:var(--muted);margin-top:22px;font-size:.95rem}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.chip{font-family:"IBM Plex Mono",monospace;font-size:.85rem;background:var(--soft);color:var(--ink);
+  border:1px solid var(--rule);border-radius:999px;padding:6px 14px;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+footer{margin-top:50px;color:var(--muted);font-size:.78rem;border-top:1px solid var(--rule);padding-top:12px}
+</style>
+<div class="wrap">
+<h1>What's That Number</h1>
+<p class="sub">Type any number from our project. Get the simplest possible answer: what it is, what it means, how we got it.</p>
+<input id="q" placeholder="e.g. 3.63" autocomplete="off" inputmode="decimal" aria-label="Type a number">
+<div id="out"></div>
+<footer>CR4C Group 2 · OENG1068 six-storey building · every value matches the submitted reports.</footer>
+</div>
+<script>
+const DB=[
+// GIVENS
+{k:["3.63"],t:"3.63 kPa",n:"The live load",s:"About 370 kg of people, desks and furniture assumed on every square metre, every floor, always.",h:"Given on our group data sheet. The highest live load in the whole course. Not calculated."},
+{k:["1.10","1.1"],t:"1.10 kPa",n:"The floor finish load",s:"About 110 kg per square metre of carpet, tiles, ceiling, lights, pipes and ducts.",h:"Given on our group data sheet. Counts as permanent (dead) load."},
+{k:["0.56"],t:"0.56 kPa",n:"The partition load",s:"About 57 kg per square metre allowed for the light office divider walls.",h:"Given on our group data sheet. Treated as permanent load spread over the floor."},
+{k:["3.7","3700"],t:"3.7 m",n:"Our big bay size",s:"The larger gap between our columns. Sets how long the beams are and how much floor each one owns.",h:"Given — our row of the Week 1 layout and load data table."},
+{k:["2.82","2820"],t:"2.82 m",n:"Our small bay size",s:"The smaller gap between columns, in the other direction.",h:"Given — same data table row."},
+{k:["24.6"],t:"24.6 kN/m³",n:"The weight of reinforced concrete",s:"Concrete weighs about 2.5 tonnes per cubic metre. Standard known value — nobody weighs concrete.",h:"From the loading standard. Used for every self-weight in the project: size times 24.6."},
+{k:["60","cu"],t:"60 kPa",n:"The clay's grip (undrained strength)",s:"How much sliding the clay resists when loaded fast — about 6 tonnes per square metre of grip, at its weakest moment.",h:"Given in the soil report, from lab tests on site samples."},
+{k:["15","20","drained"],t:"15 kPa + 20°",n:"The clay's long-term strength",s:"Years later, once its water has drained, the clay grips less (15) but gains friction between grains (20 degrees).",h:"Given in the soil report. We checked it — the short-term case was weaker, so it ruled."},
+{k:["1.5","water table"],t:"1.5 m",n:"The water table — and also the live load factor",s:"Two meanings. (1) Dig 1.5 metres on our site and you hit water — soil below is soaked. (2) 1.5 is also the safety multiplier on live load in the strength check.",h:"(1) Given in the soil report. (2) From the loading standard: live load is a guess, so it gets the bigger exaggeration."},
+{k:["4","ocr"],t:"4",n:"The clay's history (over-consolidation ratio) — and the storey height",s:"Two meanings. (1) OCR 4: in its geological past this clay carried 4 times more than our building — it's pre-squashed, like a sponge already wrung out, so it sinks much less. (2) Each storey is 4.0 metres tall.",h:"(1) Given in the soil report. (2) Given in the project brief."},
+{k:["1.2"],t:"1.2",n:"The dead load factor",s:"In the break-test, permanent weight is exaggerated by 20 percent. Small factor because concrete is predictable — we trust it.",h:"From the loading standard: strength combination = 1.2 × dead + 1.5 × live."},
+{k:["2.5","fos"],t:"2.5",n:"The soil safety factor",s:"We only ever let the clay work at 1/2.5 of its collapse strength. Big factor because soil is natural and variable.",h:"Course-set rule for foundations. Collapse pressure ÷ 2.5 = allowable pressure."},
+{k:["40","f'c","fc"],t:"40 MPa",n:"Our concrete strength — and the settlement difference limit",s:"Two meanings. (1) Grade 40 concrete: resists 40 megapascals of crushing — a strong structural mix, used in every member. (2) 40 mm is also the max allowed difference in sinking between neighbouring footings, so the building can't tilt.",h:"(1) Our design choice. (2) Course design rule. Our worst difference: just 3.8 mm."},
+{k:["500","fsy"],t:"500 MPa",n:"The steel strength — and the big column size",s:"Two meanings. (1) Our reinforcement bars yield at 500 megapascals — standard Australian bar steel. (2) The interior columns are 500 × 500 mm.",h:"(1) Standard material. (2) Our design: a 450 trial wasn't enough, sizes step in 100s, so 500."},
+// PART 1
+{k:["3.69","369"],t:"3.69 kPa",n:"The slab's own weight",s:"The bare 150 mm floor weighs about 370 kg per square metre — as much as everything it carries. The building's biggest job is carrying itself.",h:"Calculated: 0.15 m thick × 24.6 (concrete's weight) = 3.69."},
+{k:["6.84"],t:"6.84 m²",n:"A secondary beam's territory",s:"The patch of floor one typical secondary beam is responsible for — its two strips of slab.",h:"From the tributary area rule: weight goes to the nearest beam; measured off the layout."},
+{k:["43.45"],t:"43.45 kN",n:"A secondary beam's total permanent burden",s:"About 4.4 tonnes: its slab, finishes, partitions, plus its own concrete body.",h:"Calculated: pressure × its 6.84 m² territory, plus self-weight. Pure multiplication."},
+{k:["11.74"],t:"11.74 kN/m",n:"A secondary beam's workload",s:"A small car hanging off every metre of that beam, permanently, for 50 years.",h:"Its 43.45 kN burden spread along its 3.7 m length."},
+{k:["21.72","12.42","22"],t:"21.72 + 12.42 kN",n:"The handover point loads",s:"A secondary beam has no columns, so each end dumps half its load as one concentrated push in the middle of a primary beam — 21.72 permanent + 12.42 live.",h:"Calculated: the secondary's totals ÷ 2. Verified by hand for beam A1–A3."},
+{k:["57","12 groups"],t:"57 → 12",n:"Beams folded into families",s:"57 beams per floor are really only 12 different beams, because the building repeats. Design the hardest one in each family, the rest are covered.",h:"Symmetry grouping, proven by the conservation audit: all loads re-added equal the building total exactly."},
+{k:["5 frames","5"],t:"5 frames",n:"The models that covered the building",s:"Of the building's 11 structural frames, only 5 are genuinely different — mirror images don't need their own model.",h:"Symmetry: A-A matches D-D, B-B matches C-C, 1-1 matches 13-13, four middle frames identical."},
+{k:["56.91","57 knm"],t:"56.91 kNm",n:"The worst beam bending moment",s:"The hardest-bent primary beam's worst day under the exaggerated load — the benchmark enemy its whole family was designed to beat.",h:"Read off the SPACE GASS bending moment diagrams and tabulated."},
+{k:["1451.5","1451","148"],t:"1451.5 kN",n:"The busiest column's real load",s:"About 148 tonnes — a hundred cars stacked on one post. Everything above it, collected floor by floor.",h:"SPACE GASS base reaction under real (unfactored) loads. Banked for the soil design."},
+{k:["1821.8","1822"],t:"1821.8 kN",n:"The busiest column's exaggerated load",s:"The same column in the break-test future (dead ×1.2, live ×1.5). Used to design the concrete of its footing.",h:"SPACE GASS base reaction under the strength combination."},
+// PART 2
+{k:["350","450","350x450"],t:"350 × 450 mm",n:"The primary beam size — and 350 is also the tie spacing and concrete price",s:"Main meaning: primary beams are 350 wide, 450 deep — they carry brick walls plus floors. Also: column ties sit at 350 mm spacing, and concrete costs $350 per cubic metre.",h:"Beam size: our design choice, checked against the standard. Ties: 15 × bar diameter rule."},
+{k:["250","300","250x300"],t:"250 × 300 mm",n:"The secondary beam size",s:"The smaller beams that halve each bay. Smaller because they carry less and hand everything to the primaries. 300 is also the fitment spacing (R10 @ 300).",h:"Our design choice, checked against the standard."},
+{k:["2n16","n16","16"],t:"2 N16",n:"The beam steel",s:"Two 16 mm bars top and bottom of nearly every beam. Set by the code's minimum-steel rule, not by the forces — robustness, not demand. (16 is also the bar count in the big footing: 16 N20 each way.)",h:"The code minimum beat the actual moments almost everywhere — the quiet theme of the project."},
+{k:["0.055","ku"],t:"0.055",n:"The beams' ductility number",s:"How deep the crush zone goes at failure. Limit is 0.36; ours is 0.055 — the steel would stretch and the beam sag visibly long before concrete crushes. Slow, loud, safe failure.",h:"Computed in the beam design sheet from the adopted steel."},
+{k:["0.36"],t:"0.36",n:"The ductility limit",s:"The code's cap that guarantees steel-first, warning-giving failure. All our members sit far below it.",h:"AS 3600 rule, entered in every design sheet."},
+{k:["r10","10"],t:"R10",n:"The shear loops",s:"10 mm steel loops wrapped around beams every 300 mm (and columns every 350) to fight the slicing force. Slabs and footings need none — their concrete alone is enough.",h:"The standard's minimum-reinforcement case: our shear demands were mild."},
+{k:["400","4n24","8n24","24"],t:"400 × 400 / 4 N24 + 500 × 500 / 8 N24",n:"The column designs",s:"Edge and corner columns: 400 square with four 24 mm bars. Interior columns: 500 square with eight. Checked by plotting their squash-plus-bend point inside the interaction curve.",h:"All 6 groups plot inside their curves — all 28 columns verified."},
+{k:["46.42","0.05"],t:"46.42 kNm",n:"The pretend column moment",s:"Interior columns barely bend, but no column is built perfectly straight — so the code forces a minimum pretend bend: 5% of the depth × the axial load.",h:"0.05 × 0.5 m × 1821.8 kN = 46.42. The minimum eccentricity rule."},
+// PART 3
+{k:["150"],t:"150 mm",n:"The one-way slab thickness",s:"The thin edge strips of floor. Thin because the secondary beams cut every span down to ~1.85 m — short leap, small bend.",h:"Designed with the code's ready-made moment fractions (1/10, 1/11, 1/24, 1/16)."},
+{k:["200"],t:"200 mm",n:"The two-way slab thickness",s:"The middle panel, held on four sides, bending both ways like a pressed trampoline. Thicker because it works harder. (Also the bar spacing there: N10 @ 200.)",h:"Designed with the code's two-way (beta) method, support moments bumped up by a third."},
+{k:["n10","250"],t:"N10 @ 250 / 200",n:"The slab steel",s:"10 mm bars every 250 mm (one-way strips) and every 200 mm (two-way panel, both directions). Again set by the code minimum, not the forces.",h:"Minimum steel governed. All inside the crack-control spacing cap."},
+{k:["89.97","90"],t:"89.97 kPa",n:"The soil pushing back up",s:"Under the biggest footing, the clay pushes up on the pad's underside with ~9 tonnes per square metre — which is why the pad's steel runs across its BOTTOM.",h:"Calculated: exaggerated column load 1821.8 ÷ pad area (4.5 × 4.5)."},
+{k:["810"],t:"810 kNm",n:"The footing's bending demand",s:"The upward soil pressure bends the pad like a shelf off each column face — this is how hard.",h:"Standard formula: soil pressure × pad width × overhang² ÷ 8, at the column face."},
+{k:["1018","978","126"],t:"1018 / 978 kNm",n:"The footing's bending capacity",s:"What the pad can take: 126% of demand one way, 121% the other. Two values because the two bar layers cross — one sits 20 mm shallower.",h:"From the footing design sheet with 16 N20 bars each way. Both directions pass."},
+{k:["515","495"],t:"515 / 495 mm",n:"The footing's two effective depths",s:"The bottom bars run both ways, so the layers stack — one layer works at 515 mm depth, the other at 495. The shallower one is checked separately.",h:"600 thick − 75 cover − bar sizes. A real construction detail the sheet respects."},
+{k:["609","850"],t:"609 ≤ 850 kN",n:"The one-way shear check",s:"The pad snapping along a line near the column: 609 of demand against 850 of concrete capacity. Passes with no shear steel at all.",h:"From the footing shear sheet — the 600 mm thickness does this job alone."},
+{k:["1733","2965","3980"],t:"1733 ≤ 2965 kN",n:"The punching check",s:"The column trying to push a cone through the pad, like a pencil through cardboard: 1733 pushing vs 2965 resisting, on a 3.98 m perimeter around the column.",h:"From the footing shear sheet. The other reason the pad is 600 thick."},
+{k:["600"],t:"600 mm",n:"The big footing's thickness",s:"Over half a metre of solid concrete. Footings have zero shear loops — thickness IS their shear design.",h:"Trial thickness that passes both shear checks and bending."},
+{k:["290","16n20"],t:"16 N20 @ ~290 mm",n:"The big footing's steel",s:"Sixteen 20 mm bars each way across the pad's bottom, about 290 mm apart — under the code cap of 2×thickness-or-300.",h:"Chosen to beat both the code minimum (4,536 mm²) and the strength demand (4,624). Provided: 5,024."},
+{k:["75"],t:"75 mm",n:"The footing cover",s:"The concrete skin between soil and steel. Thick (beams only need 30) because concrete cast against earth needs more protection from moisture.",h:"Code requirement for concrete poured against the ground."},
+// PART 4
+{k:["444.6","445","45"],t:"444.6 kPa",n:"The clay's collapse pressure",s:"About 45 tonnes per square metre — where the clay actually fails by tearing out a curved bowl of soil under the pad.",h:"Terzaghi's formula: 1.3 × grip (60) × 5.7 (the bowl geometry factor)."},
+{k:["177.84","178","18"],t:"177.84 kPa",n:"The allowable soil pressure",s:"About 18 tonnes per square metre — all the clay is allowed to carry. The single most important soil number in the project.",h:"Collapse pressure 444.6 ÷ safety factor 2.5."},
+{k:["217.2","217"],t:"217.2 kPa",n:"The drained (long-term) allowable",s:"What the clay could carry years later once drained — higher than 177.84, which proves the short-term case rules.",h:"Terzaghi again with the drained strengths (15 kPa + 20°). Checked and set aside."},
+{k:["8.16"],t:"8.16 m²",n:"The required pad area",s:"The moment the top of the project met the bottom: 148 tonnes coming down ÷ 18 tonnes per square metre allowed.",h:"1451.5 ÷ 177.84. A 2.5 m pad gives only 77% of this — fail. A 3 m pad gives 110% — pass."},
+{k:["7.7"],t:"7.7 mm",n:"The immediate settlement",s:"The instant elastic squash as the load first arrives — like stepping on firm rubber.",h:"Calculated from the clay's stiffness (Janbu method) at the final 4.5 m pad."},
+{k:["26.5"],t:"26.5 mm",n:"The consolidation settlement",s:"The slow flattening over years as water seeps out of the clay sponge. Would be far worse if the clay weren't pre-squashed (OCR 4).",h:"Calculated with the clay's gentle recompression stiffness, because it has carried 4× more before."},
+{k:["26.7","27"],t:"26.7 mm",n:"The creep — the villain",s:"Grains slowly rearranging for 50 years. Eats 40% of the whole allowance and BARELY SHRINKS when the pad grows — the reason footings had to get huge.",h:"Calculated from the creep coefficient over the 50-year design life."},
+{k:["60.9","61"],t:"60.9 mm",n:"The final total settlement",s:"7.7 + 26.5 + 26.7. Passes the 65 limit with 4 mm to spare. The number that ended the iteration.",h:"The three parts added, at the final 4.5 m pad size."},
+{k:["65"],t:"65 mm",n:"The total settlement limit",s:"Six and a half centimetres of sinking allowed over 50 years. The rule that redesigned our foundations.",h:"Course design rule. We finished at 60.9."},
+{k:["85.9","86","73.7","74","65.3"],t:"86 → 74 → 65.3 → 60.9",n:"The iteration story",s:"The 3 m pad (which PASSED strength) sinks 86 mm — fail. 3.5 m: 74 — fail. 4 m: 65.3 — fail by a fraction. 4.5 m: 60.9 — pass. Sinking, not breaking, sized our foundations.",h:"The settlement sheet re-run at each trial size. All four runs kept in the report on purpose."},
+{k:["4.5","3.0","3.5","4.0"],t:"4.5 m",n:"The biggest footing's final size",s:"4.5 × 4.5 metres — more than double the area strength needed, purely because of sinking.",h:"The end of the iteration: bearing was happy at 3.0; settlement demanded 4.5."},
+{k:["3.8"],t:"3.8 mm",n:"The worst differential settlement",s:"No two neighbouring footings sink more than 3.8 mm differently (limit: 40). The building sinks evenly — it will never tilt or crack.",h:"Every footing compared with its four neighbours in the summary table."},
+{k:["2.6","3.2","3.4","4.3"],t:"2.6 → 4.5 m",n:"The full footing schedule",s:"CG1: 2.6 m. CG2 & CG3: 3.2. CG5: 3.4. CG4: 4.3. CG6: 4.5. Every one sized by the same bearing-then-settlement process.",h:"Same method as CG6, run per column group. All settlement-governed."},
+// SUPPORTING
+{k:["681","681.44","85"],t:"681.44 m³",n:"All the concrete",s:"About 85 full concrete-truck loads for the whole structure. Footings use nearly as much as all 342 beams — the price of settlement-governed sizing.",h:"Final member schedule × member volumes, in the costing workbook."},
+{k:["48499","48.5","48,499"],t:"48,499 kg",n:"All the steel",s:"About 48.5 tonnes — the weight of 30 cars — of reinforcement bars through the whole building.",h:"Costing workbook, with the beam steel (11,379 kg) corrected by hand because of the locked-cell error."},
+{k:["11379","11.4"],t:"11,379 kg",n:"The hand-corrected beam steel",s:"Four locked rows in the costing template were broken — claiming a whole beam holds 0.44 kg of steel. We computed the real figure by hand.",h:"Manual take-off, disclosed in the report, lecturer emailed. You never hide a discrepancy."},
+{k:["335503","335500","335","$335"],t:"≈ $335,500",n:"The total materials bill",s:"Concrete $238,504 + steel $96,999. About $268 per square metre of floor — the economical end of the range for offices.",h:"Quantities × unit prices ($350/m³ concrete, $2/kg steel)."},
+{k:["268"],t:"$268 /m²",n:"Cost per square metre of floor",s:"A sanity check: typical structural material cost for an office building — confirms nothing is wildly oversized.",h:"Total $335,503 ÷ floor area."},
+{k:["71","29"],t:"71% / 29%",n:"Where the money goes",s:"Concrete takes 71 cents of every dollar, steel 29. Also: 71 kg of steel per cubic metre of concrete — an economical mix.",h:"From the cost summary tables."},
+{k:["73.5","110.25","143.91"],t:"73.5 / 110.25 / 143.91",n:"Spreadsheet-project scenario 1",s:"Our self-built tool's test: left support carries 73.5 kN, right 110.25 (they sum to the applied load exactly), max bending 143.91 kNm.",h:"The tool's superposition engine — and the identical answers from our hand calculation. Exact match, every point."},
+{k:["67.2","102.2","157.47"],t:"67.2 / 102.2 / 157.47",n:"Spreadsheet-project scenario 2",s:"Second full test of the tool: reactions 67.2 and 102.2 kN, max bending 157.47 kNm.",h:"Same double-check: tool vs complete hand solution. Exact agreement again."},
+{k:["101"],t:"101 stations",n:"The tool's resolution",s:"Our spreadsheet tool computes shear and bending at 101 points along the beam — every 1% of the span — then draws the diagrams from them.",h:"IFS condition logic at each station asks: is this point before, under, or past each load?"},
+{k:["342","180","28","30"],t:"342 · 180 · 28 · 28",n:"The whole building",s:"342 beams, 180 slab panels, 28 columns, 28 pad footings — every one designed inside a verified family, every design checked two ways.",h:"6 floors × 57 beams; 6 × 30 panels; the column grid; one pad per column."},
+{k:["0.44"],t:"0.44 kg",n:"The impossible number",s:"The locked costing template claimed a whole structural beam contains 0.44 kg of steel — less than half a bag of sugar. The clue that four locked rows were broken.",h:"A formula dragged down with shifted references. We couldn't edit locked cells — so: manual fix, open disclosure, email to lecturer."}
+];
+const q=document.getElementById('q'),out=document.getElementById('out');
+const EX=["3.63","177.84","60.9","1451.5","810","0.055","4.5","335500","26.7","56.91"];
+function norm(s){return String(s).toLowerCase().replace(/[,\s$]/g,'').replace(/kpa|mpa|knm|kn\/m|kn|kg|mm|m³|m2|m²|%/g,'');}
+function card(e){return `<div class="card"><span class="num">${e.t}</span><h2>${e.n}</h2>
+<div class="row"><b>In the simplest terms</b>${e.s}</div>
+<div class="row"><b>How we got it</b>${e.h}</div></div>`;}
+function render(){
+  const raw=q.value.trim();
+  if(!raw){out.innerHTML=`<p class="none">Try one of these:</p><div class="chips">`+
+    EX.map(x=>`<button class="chip" onclick="go('${x}')">${x}</button>`).join('')+`</div>`;return;}
+  const n=norm(raw);
+  let hits=DB.filter(e=>e.k.some(k=>norm(k)===n));
+  if(!hits.length)hits=DB.filter(e=>e.k.some(k=>norm(k).startsWith(n)||n.startsWith(norm(k))&&norm(k).length>1));
+  if(!hits.length)hits=DB.filter(e=>e.n.toLowerCase().includes(raw.toLowerCase())||e.s.toLowerCase().includes(raw.toLowerCase()));
+  out.innerHTML=hits.length?hits.slice(0,4).map(card).join(''):
+    `<p class="none">Nothing for “${raw}”. Try the number with no units (e.g. 177.84), or a word like “settlement”, “steel”, “clay”.</p>`;
+}
+function go(s){q.value=s;render();q.focus();}
+window.go=go;
+q.addEventListener('input',render);
+render();
+q.focus();
+</script>
